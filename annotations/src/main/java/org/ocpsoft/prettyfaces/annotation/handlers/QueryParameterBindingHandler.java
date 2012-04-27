@@ -14,9 +14,9 @@ import org.ocpsoft.rewrite.annotation.spi.FieldAnnotationHandler;
 import org.ocpsoft.rewrite.bind.Bindable;
 import org.ocpsoft.rewrite.bind.Binding;
 import org.ocpsoft.rewrite.bind.Bindings;
-import org.ocpsoft.rewrite.bind.El;
 import org.ocpsoft.rewrite.config.Condition;
 import org.ocpsoft.rewrite.context.EvaluationContext;
+import org.ocpsoft.rewrite.el.El;
 import org.ocpsoft.rewrite.faces.config.PhaseBinding;
 import org.ocpsoft.rewrite.servlet.config.HttpCondition;
 import org.ocpsoft.rewrite.servlet.http.event.HttpInboundServletRewrite;
@@ -45,19 +45,13 @@ public class QueryParameterBindingHandler extends FieldAnnotationHandler<QueryPa
          queryParam = annotation.value();
       }
 
-      // FIXME: dirty way to build the EL expression
-      String simpleClassName = field.getDeclaringClass().getSimpleName();
-      String beanName = String.valueOf(simpleClassName.charAt(0)).toLowerCase()
-               + simpleClassName.substring(1);
-      String expression = "#{" + beanName + "." + field.getName() + "}";
-
       // add the binding condition
       QueryParameterBindingCondition bindingCondition = new QueryParameterBindingCondition(queryParam);
       Condition conjunction = context.getRuleBuilder().getConditionBuilder().and(bindingCondition);
       context.getRuleBuilder().when(conjunction);
 
       // build an deferred EL binding
-      El elBinding = El.property(expression);
+      El elBinding = El.property(field);
       PhaseBinding deferredBinding = PhaseBinding.to(elBinding).after(PhaseId.RESTORE_VIEW);
       bindingCondition.bindsTo(deferredBinding);
 
@@ -65,7 +59,7 @@ public class QueryParameterBindingHandler extends FieldAnnotationHandler<QueryPa
       context.setBindingBuilder(elBinding);
 
       if (log.isTraceEnabled()) {
-         log.trace("Binding query parameter [{}] to EL expression: {}", queryParam, expression);
+         log.trace("Binding query parameter [{}] to to field [{}]", queryParam, field);
       }
 
    }
